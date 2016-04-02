@@ -18,7 +18,7 @@ interface GitHubService {
             @Path("repo") String repo);
 
 
-    public static final Retrofit retrofit = new Retrofit.Builder()
+    Retrofit retrofit = new Retrofit.Builder()
             .baseUrl("https://api.github.com/")
             .addConverterFactory(GsonConverterFactory.create())
             .build();

@@ -11,11 +11,15 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.IOException;
 import java.util.List;
 
 import retrofit.Call;
+import retrofit.Callback;
+import retrofit.Response;
+import retrofit.Retrofit;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -26,44 +30,30 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Super fast hello world from JRebel for Android", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
-
         Button button = (Button) findViewById(R.id.button);
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                // fetch from https://api.github.com/repos/square/retrofit/contributors
                 GitHubService gitHubService = GitHubService.retrofit.create(GitHubService.class);
                 final Call<List<Contributor>> call =
                         gitHubService.repoContributors("square", "retrofit");
-                new NetworkCall().execute(call);
+                call.enqueue(new Callback<List<Contributor>>() {
+                    @Override
+                    public void onResponse(Response<List<Contributor>> response, Retrofit retrofit) {
+                        TextView textView = (TextView) findViewById(R.id.textView);
+                        List<Contributor> contributors = response.body();
+                        textView.setText(contributors.toString());
+                    }
+
+                    @Override
+                    public void onFailure(Throwable t) {
+                        Toast.makeText(MainActivity.this, "Failure while fetching", Toast.LENGTH_SHORT).show();
+                    }
+                });
             }
         });
-    }
 
-    private class NetworkCall extends AsyncTask<Call, Void, String> {
-        @Override
-        protected String doInBackground(Call... params) {
-            try {
-                return params[0].execute().body().toString();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(String result) {
-            final TextView textView = (TextView) findViewById(R.id.textView);
-            textView.setText(result);
-        }
     }
 
     @Override
